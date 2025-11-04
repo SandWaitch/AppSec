@@ -111,13 +111,17 @@ jobs:
           node-version: '20'
           
       - name: Install and run application
-        continue-on-error: true
         run: |
           npm install
           npm start
           APP_PID=$!
           echo "APP_PID=$APP_PID" >> $GITHUB_ENV
-          timeout 300 bash -c 'until curl -f http://localhost:3000/health || curl -f http://localhost:3000; do sleep 5;'
+          timeout 300 bash -c 'until curl -f http://localhost:3000/health || curl -f http://localhost:3000; do sleep 5;done'
+
+      - name: Verify Juice Shop accessibility
+        run: |
+          echo "🔍 Verifying application accessibility..."
+          curl -I http://localhost:3000 || echo "Connection test completed"
           
       - name: ZAP Baseline Scan
         run: |
@@ -127,7 +131,6 @@ jobs:
 
       - name: Cleanup - Stop Juice Shop
         if: always()
-        continue-on-error: true
         run: |
           echo "🛑 Stopping Juice Shop application..."
           kill $APP_PID 2>/dev/null || pkill -f "npm start" || echo "Application already stopped"
